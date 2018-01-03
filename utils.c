@@ -137,11 +137,22 @@ void prompt(){
     scanf("%s", path);
     getchar();
     track = fopen(path,"rb");
+    
+    if (track == NULL){
+        printf("Невозможно открыть файл");
+        exit(1);
+    }
 
     pos = strrchr(path, '.');       //ищем, где начинается .wav (там, где последняя точка в path)
     strncpy(pos, mark, 14);         //заменяем .wav на _Reverbed.wav
     printf("%s\n", path);
     reverb = fopen(path, "wb");
+    
+    if (reverb == NULL){
+        printf("Невозможно создать файл");
+        exit(1);
+    }
+ 
 }
 
 void copyTrack(short *inL, short *inR, short *outL, short *outR, short *stream){
