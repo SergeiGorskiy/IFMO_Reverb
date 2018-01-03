@@ -70,7 +70,7 @@ void print_meta(){
     printf("(33-34): Quality: %s \n", quality);
     printf("(35-36): Bits: %u \n", header.bit);
     printf("(37-40): Data marker: %.4s \n", header.data_marker);
-    printf("(41-44): Size of track: %u\n\n\v", header.chunk_size);
+    printf("(41-44): Size of chunk: %u\n\n\v", header.chunk_size);
 }
 
 
