@@ -70,7 +70,7 @@ void print_meta(){
     printf("(33-34): Quality: %s \n", quality);
     printf("(35-36): Bits: %u \n", header.bit);
     printf("(37-40): Data marker: %.4s \n", header.data_marker);
-    printf("(41-44): Size of chunk: %u\n\n\v", header.chunk_size);
+    printf("(41-44): Size of track: %u\n\n\v", header.chunk_size);
 }
 
 
@@ -109,11 +109,19 @@ void prompt(){
          *mark = "_Reverbed.wav",
          *pos;
 
-    printf("Стандартные значения:\n\tРезонанс - 5\n\tОтражения - 7\nПродолжить со стандартными значениями?(Y/N)\n");
+    printf("===============================================\n");
+    printf("#%+8Маленький цифровой ревербератор       #\n#%+10с регулятором уровня volume         #\n");
+    printf("===============================================\n");
+    printf("%+13Стандартные значения:\n\n%+17Volume = max\n%+17Резонанс = 5\n%+17Отражения = 7\n\n  Продолжить со стандартными значениями?(Y/N)\n");
     scanf("%s", &answer);
     getchar();
 
     if (answer == 'N' | answer == 'n'){
+
+        printf("Введите значение от 1 до 30 для уровня громкости\n");
+        scanf("%f", &gain);
+        getchar();
+        gain /= 1000;
 
         printf("Введите значение от 1 до 9 для уровня резонанса (меньше = больше)\n");
         scanf("%f", &initialResonanse);
@@ -137,22 +145,21 @@ void prompt(){
     scanf("%s", path);
     getchar();
     track = fopen(path,"rb");
-    
+
     if (track == NULL){
-        printf("Невозможно открыть файл");
+        printf("Невозможно открыть файл\n");
         exit(1);
     }
 
     pos = strrchr(path, '.');       //ищем, где начинается .wav (там, где последняя точка в path)
     strncpy(pos, mark, 14);         //заменяем .wav на _Reverbed.wav
-    printf("%s\n", path);
+    printf("%s\n\n", path);
     reverb = fopen(path, "wb");
-    
+
     if (reverb == NULL){
-        printf("Невозможно создать файл");
+        printf("Невозможно создать файл\n");
         exit(1);
     }
- 
 }
 
 void copyTrack(short *inL, short *inR, short *outL, short *outR, short *stream){
