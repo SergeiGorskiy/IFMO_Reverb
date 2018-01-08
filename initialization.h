@@ -30,13 +30,13 @@ short   combSize[16] = {1116, 1116+23, 1188, 1188+23,       //размеры б�
 
 float   resonance,
         resonance2,
-        scaleResonance = 0.4,
-        initialResonanse = 0.5;  //мешьше значение = больше резонанса
+        initialResonance,       //мешьше значение = больше резонанса
+        scaleResonance = 0.4;
 
 float   reflectionLvl,
         scaleRoom = 0.28,
         offsetRoom = 0.5,
-        initialRoom = 0.7,
+        initialRoom,
         gain = 0.03;
 
 short   *L1, *R1,
@@ -58,39 +58,5 @@ short   *comb[16],          //массив указателей на 16 буфе
 
 short buffer[2];            //буфер для двух сэмплов - левого и правого канала (по 16 бит)
 char head[44];              //буфер для метаданных
-
-void initialize(){
-
-    short *arr1[16] = {     //инициализация буферов
-            L1, R1,
-            L2, R2,
-            L3, R3,
-            L4, R4,
-            L5, R5,
-            L6, R6,
-            L7, R7,
-            L8, R8
-    };
-
-    short *arr2[8] = {
-            aL1, aR1,
-            aL2, aR2,
-            aL3, aR3,
-            aL4, aR4
-    };
-
-    *comb = *arr1;
-    *allpass = *arr2;
-
-    for (int i = 0; i < 16; ++i) {
-        comb[i] = setBuffer(tmpP, combSize[i]);
-    }
-
-    for (int i = 0; i < 8; ++i) {
-        allpass[i] = setBuffer(tmpP, allpassSize[i]);
-    }
-
-    prompt();       //запрашиваем данные у пользователя
-}
 
 #endif

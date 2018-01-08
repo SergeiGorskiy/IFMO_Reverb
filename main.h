@@ -33,14 +33,14 @@ void read_header(FILE *);
 void print_meta();
 unsigned lilE_to_bigE(unsigned char *);
 
-void prompt();
+void processArgs(int, char**);
 void setResonance();
-void setReflection();
-void copyReverbed(short *, short *, short *);
-void copyTrack(short *, short *, short *, short *, short *);
-short *setBuffer(short *, int);
+void removeBuffers(short **);
+short *allocBuffer(short *, int);
 
+void copyTrack(short *, short *, short *, short *, short *);
 void process(short *, short *, short *, short *);
+void copyReverbed(short *, short *, short *);
 short combFunc(short, short, short *);
 short allpassFunc(short, short, short *);
 

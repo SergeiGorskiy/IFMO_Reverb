@@ -1,13 +1,11 @@
 #ifndef REVERB_FILTERS_C
 #define REVERB_FILTERS_C
 
-#include "utils.c"
 #define META 44
 
 void process(short *inL, short *inR, short *outL, short *outR){
 
-    //число 26(байт) выбрано вручную. Если выставить меньше - файл не распознается
-    for (int i = 26; i < header.file_size/4; i++){
+    for (int i = 0; i < header.file_size/4; i++){
 
         int pos = META + i;
         short outputL = 0, outputR = 0, inputL, inputR;

@@ -4,6 +4,8 @@
 #include "main.h"
 #include "initialization.h"
 #include <string.h>
+#include <stdlib.h>
+#define MAXLEN 1000
 
 char format_name[7];
 char quality[27];
@@ -73,8 +75,6 @@ void print_meta(){
     printf("(41-44): Size of track: %u\n\n\v", header.chunk_size);
 }
 
-
-
 //конвертация порядка бит
 unsigned lilE_to_bigE(unsigned char arr[]){
 
@@ -85,82 +85,131 @@ unsigned lilE_to_bigE(unsigned char arr[]){
     return bigEndian;
 }
 
-void setReflection(){
-    reflectionLvl = (initialRoom * scaleRoom) + offsetRoom;
-};
 
-void setResonance(){
-    resonance = initialResonanse * scaleResonance;
-    resonance2 = 1 - resonance;
-};
 
-short *setBuffer(short *buf, int size){
-    buf = (short *)(malloc(sizeof(buf) * size));
-    for (int i = 0; i <= size; i++)
-        *(buf + i) = 0;
+void processArgs(int argc, char *argv[]){
 
-    return buf;
-}
+    char *mark = "_Reverbed.wav",
+         path[MAXLEN],
+         c_val[3];          //значение параметра в виде строки
 
-void prompt(){
-
-    char answer,
-         path[1000],
-         *mark = "_Reverbed.wav",
-         *pos;
-
-    printf("===============================================\n");
-    printf("#%+8Маленький цифровой ревербератор       #\n#%+10с регулятором уровня volume         #\n");
-    printf("===============================================\n");
-    printf("%+13Стандартные значения:\n\n%+17Volume = max\n%+17Резонанс = 5\n%+17Отражения = 7\n\n  Продолжить со стандартными значениями?(Y/N)\n");
-    scanf("%s", &answer);
-    getchar();
-
-    if (answer == 'N' | answer == 'n'){
-
-        printf("Введите значение от 1 до 30 для уровня громкости\n");
-        scanf("%f", &gain);
-        getchar();
-        gain /= 1000;
-
-        printf("Введите значение от 1 до 9 для уровня резонанса (меньше = больше)\n");
-        scanf("%f", &initialResonanse);
-        getchar();
-        initialResonanse /= 10;
-
-        printf("Введите значение от 1 до 9 для уровня отражений\n (если эффекта явно не хватает, то можете попробовать ввести значение от 10 до 20\n но делайте это на СВОЙ СТРАХ И РИСК, так как может получиться оглушающий шум)\n");
-        scanf("%f", &initialRoom);
-        getchar();
-        initialRoom /= 10;
-
-    } else if (answer != 'Y' & answer != 'y') {
-        printf("Y - да, N - нет\n");
-        prompt();
+    if (argc == 1){
+        printf("Список параметров:\n\t--input=(полный путь до файла)(обязательно)\n\t");
+        printf("--output=(полный путь до желаемого файла)\n\t");
+        printf("--vol=(громкость от 1 до 30)\n\t");
+        printf("--initRes=(уровень резонанса от 1 до 9 (меньше = больше))\n\t");
+        printf("--initRef=(уровень отражений от 1 до 9)\n\t(другие значения не рекомендуются, так как могут испортить звук)\n");
+        exit(1);
     }
 
-    setResonance();
-    setReflection();
+    if (argc == 2){     //если был передан только обязательный параметр (путь до файла)
+        gain = 0.03;
+        initialRoom = 0.7;
+        initialResonance = 0.5;
+    }
 
-    printf("Введите полный путь до трека\n");
-    scanf("%s", path);
-    getchar();
-    track = fopen(path,"rb");
+    while (argc != 1){
+
+        char argName[19];
+        float f_val;                                        //числовое знчение параметра
+        int  *valueP = strchr(argv[argc-1], '=') + 1,       //указатель на начало передаваемого значения
+             varNameEnd = strcspn(argv[argc-1], "=");       //длинна имени передаваемого параметра
+
+        strncpy(argName, argv[argc-1], varNameEnd);         //копируем имя параметра
+        argName[varNameEnd] = '\0';                         //дописываем завершающий символ к имени параметра
+
+        if (strcmp(argName, "--vol") == 0){
+            strcpy(c_val, valueP);
+            f_val = atof(c_val);
+            gain = f_val/1000.0;
+        }
+        if (strcmp(argName, "--initRes") == 0){
+            strcpy(c_val, valueP);
+            f_val = atof(c_val);
+            initialResonance = f_val/10.0;
+        }
+        if (strcmp(argName, "--initRef") == 0){
+            strcpy(c_val, valueP);
+            f_val = atof(c_val);
+            initialRoom = f_val/10.0;
+        }
+        if (strcmp(argName, "--input") == 0){
+            strcpy(path, valueP);
+            track = fopen(path, "rb");
+        }
+        if (strcmp(argName, "--output") == 0){
+            strcpy(path, valueP);
+            reverb = fopen(path, "wb");
+        }
+
+        --argc;
+    };
+
 
     if (track == NULL){
         printf("Невозможно открыть файл\n");
         exit(1);
     }
-
-    pos = strrchr(path, '.');       //ищем, где начинается .wav (там, где последняя точка в path)
-    strncpy(pos, mark, 14);         //заменяем .wav на _Reverbed.wav
-    printf("%s\n\n", path);
-    reverb = fopen(path, "wb");
-
     if (reverb == NULL){
-        printf("Невозможно создать файл\n");
-        exit(1);
+        int *pos = strrchr(path, '.');        //ищем, где начинается .wav (там, где последняя точка в path)
+        strncpy(pos, mark, 14);               //заменяем .wav на _Reverbed.wav
+        reverb = fopen(path, "wb");
+
+        if (reverb == NULL){
+            printf("Невозможно создать файл\n");
+            exit(1);
+        }
     }
 }
+
+void initialize(){
+
+    short *arr1[16] = {     //инициализация буферов
+            L1, R1,
+            L2, R2,
+            L3, R3,
+            L4, R4,
+            L5, R5,
+            L6, R6,
+            L7, R7,
+            L8, R8
+    };
+
+    short *arr2[8] = {
+            aL1, aR1,
+            aL2, aR2,
+            aL3, aR3,
+            aL4, aR4
+    };
+
+    *comb = *arr1;
+    *allpass = *arr2;
+
+    for (int i = 0; i < 16; ++i) {
+        comb[i] = allocBuffer(tmpP, combSize[i]);
+    }
+
+    for (int i = 0; i < 8; ++i) {
+        allpass[i] = allocBuffer(tmpP, allpassSize[i]);
+    }
+
+    setResonance();
+    reflectionLvl = (initialRoom * scaleRoom) + offsetRoom;
+}
+
+short *allocBuffer(short *buf, int size){
+    buf = (short *)(calloc(size, sizeof(buf)));
+
+    if (!buf){
+        printf("Ошибка выделения памяти\n");
+        exit(1);
+    } else return buf;
+}
+
+void setResonance(){
+    resonance = initialResonance * scaleResonance;
+    resonance2 = 1 - resonance;
+};
 
 void copyTrack(short *inL, short *inR, short *outL, short *outR, short *stream){
 
@@ -200,6 +249,11 @@ void copyReverbed(short *outL, short *outR, short *stream){
         }
 
     fwrite(stream, sizeof(short), header.file_size/2, reverb);      //записаваем трек в файл
+}
+
+void removeBuffers(short **bufArray){
+    for (int i = 0; i < sizeof(bufArray); ++i)
+        free(*(bufArray + i));
 }
 
 #endif
