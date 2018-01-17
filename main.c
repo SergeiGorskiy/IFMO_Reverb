@@ -1,6 +1,7 @@
-#include <stdio.h>
-#include "utils.c"
-#include "filters.c"
+#include <stdlib.h>
+
+#include "utils.h"
+#include "initialization.h"
 
 int main(int argc, char *argv[]) {
 

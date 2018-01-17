@@ -3,6 +3,9 @@
 
 #define META 44
 
+#include "utils.h"
+#include "initialization.h"
+
 void process(short *inL, short *inR, short *outL, short *outR){
 
     for (int i = 0; i < header.file_size/4; i++){

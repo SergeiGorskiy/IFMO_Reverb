@@ -1,14 +1,55 @@
 #ifndef REVERB_UTILS_C
 #define REVERB_UTILS_C
 
-#include "main.h"
-#include "initialization.h"
-#include <string.h>
-#include <stdlib.h>
 #define MAXLEN 1000
 
-char format_name[7];
-char quality[27];
+#include <string.h>
+#include <stdlib.h>
+
+#include "utils.h"
+#include "initialization.h"
+
+char format_name[7],
+     quality[27];
+
+unsigned char buffer_4[4],
+              buffer_2[2];
+
+short   stereospread = 23,
+        reflection = 0;
+
+float   resonance,
+        resonance2,
+        initialResonance,
+        scaleResonance;
+
+float   reflectionLvl,
+        scaleRoom = 0.28,
+        offsetRoom = 0.5,
+        initialRoom,
+        gain = 0.03;
+
+short combSize[16] = {1116, 1116+23, 1188, 1188+23,       //размеры буферов
+                      1277, 1277+23, 1356, 1356+23,
+                      1422, 1422+23, 1488, 1488+23,
+                      1557, 1557+23, 1617, 1617+23};
+
+short allpassSize[8] = {556, 556+23, 441, 441+23,
+                        341, 341+23, 228, 228+23};
+
+short combItr[16] = {             //итераторы для каждого буфера
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0
+};
+
+short allpassItr[8] = {
+        0,0,0,0,
+        0,0,0,0
+};
+
+
 
 void read_header(FILE * track){
 
@@ -86,7 +127,6 @@ unsigned lilE_to_bigE(unsigned char arr[]){
 }
 
 
-
 void processArgs(int argc, char *argv[]){
 
     char *mark = "_Reverbed.wav",
@@ -112,8 +152,8 @@ void processArgs(int argc, char *argv[]){
 
         char argName[19];
         float f_val;                                        //числовое знчение параметра
-        int  *valueP = strchr(argv[argc-1], '=') + 1,       //указатель на начало передаваемого значения
-             varNameEnd = strcspn(argv[argc-1], "=");       //длинна имени передаваемого параметра
+        char *valueP = strchr(argv[argc-1], '=') + 1;       //указатель на начало передаваемого значения
+        int varNameEnd = strcspn(argv[argc-1], "=");       //длинна имени передаваемого параметра
 
         strncpy(argName, argv[argc-1], varNameEnd);         //копируем имя параметра
         argName[varNameEnd] = '\0';                         //дописываем завершающий символ к имени параметра
@@ -151,7 +191,7 @@ void processArgs(int argc, char *argv[]){
         exit(1);
     }
     if (reverb == NULL){
-        int *pos = strrchr(path, '.');        //ищем, где начинается .wav (там, где последняя точка в path)
+        char *pos = strrchr(path, '.');        //ищем, где начинается .wav (там, где последняя точка в path)
         strncpy(pos, mark, 14);               //заменяем .wav на _Reverbed.wav
         reverb = fopen(path, "wb");
 
@@ -185,6 +225,7 @@ void initialize(){
     *comb = *arr1;
     *allpass = *arr2;
 
+    short *tmpP;
     for (int i = 0; i < 16; ++i) {
         comb[i] = allocBuffer(tmpP, combSize[i]);
     }
@@ -195,15 +236,6 @@ void initialize(){
 
     setResonance();
     reflectionLvl = (initialRoom * scaleRoom) + offsetRoom;
-}
-
-short *allocBuffer(short *buf, int size){
-    buf = (short *)(calloc(size, sizeof(buf)));
-
-    if (!buf){
-        printf("Ошибка выделения памяти\n");
-        exit(1);
-    } else return buf;
 }
 
 void setResonance(){
@@ -249,6 +281,15 @@ void copyReverbed(short *outL, short *outR, short *stream){
         }
 
     fwrite(stream, sizeof(short), header.file_size/2, reverb);      //записаваем трек в файл
+}
+
+short *allocBuffer(short *buf, int size){
+    buf = (short *)(calloc(size, sizeof(buf)));
+
+    if (!buf){
+        printf("Ошибка выделения памяти\n");
+        exit(1);
+    } else return buf;
 }
 
 void removeBuffers(short **bufArray){
